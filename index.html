@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Личное Портфолио | Джангир Арманов</title>
+    <!-- Подключение Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Подключение библиотеки иконок Lucide -->
+    <script type="module">
+      // Обновленный список иконок: Удалены Globe, Menu, X, так как они импортируются далее
+      import { createIcons, MapPin, User, Briefcase, Mail, Clock, CheckCircle, Award, Phone, Send, Instagram, Menu, X } from 'https://unpkg.com/lucide@latest/dist/esm/lucide.js';
+      createIcons({ icons: { MapPin, User, Briefcase, Mail, Clock, CheckCircle, Award, Phone, Send, Instagram, Menu, X } });
+    </script>
+    <style>
+        /* Установка шрифта Inter */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f9;
+        }
+        
+        /* 1. Плавное появление страниц (Fade-in) */
+        .page-content {
+            transition: opacity 0.4s ease-in-out;
+            opacity: 0; /* Начальная непрозрачность 0 */
+        }
+        .page-content.active-page {
+            opacity: 1; /* Активированная страница */
+        }
+        
+        /* Стили для активной кнопки навигации (Десктоп) */
+        .nav-link.active {
+            position: relative;
+            color: #3b82f6;
+        }
+        .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #3b82f6; 
+            border-radius: 9999px;
+        }
+        
+        /* Стили для активной кнопки навигации (Мобильное меню) */
+        .mobile-nav-link.active {
+            background-color: #eff6ff; /* blue-50 */
+            color: #2563eb; /* blue-600 */
+        }
+
+
+        /* 2. Анимация: Небольшое перемещение/пульсация для заголовков (Движение) */
+        @keyframes headerPulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.005); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+        }
+        /* Применяем к h2 и h3 для ощущения движения */
+        .animated-header {
+            animation: headerPulse 3s infinite ease-in-out;
+            display: inline-block;
+        }
+
+        /* 3. Анимация: Мигание для элемента (Блинк) - Применим к подзаголовку на Главной */
+        @keyframes subtleBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.65; } /* Менее резкое мигание */
+        }
+        .blinking-text {
+            animation: subtleBlink 2.5s infinite ease-in-out;
+        }
+        
+        /* 4. Стили для плавного появления карточек в Портфолио */
+        .project-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        /* Контакты */
+
+        /* Стили для модального окна */
+        #message-modal {
+            transition: opacity 0.3s ease-in-out;
+        }       
+
+        /* --- СТИЛИ GOOGLE TRANSLATE УДАЛЕНЫ --- */
+
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- Заголовок и Навигация -->
+    <header class="bg-white shadow-lg sticky top-0 z-10">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-7xl">
+            <!-- Логотип / Имя -->
+            <a href="#" class="text-3xl font-extrabold text-gray-900 tracking-tight" data-page="home" onclick="handleNavigation('home')">
+                YelAr
+            </a>
+
+            <!-- Навигационные ссылки (Десктоп) -->
+            <nav class="hidden md:flex items-center space-x-6 lg:space-x-10">
+                <button class="nav-link text-gray-600 hover:text-blue-500 font-medium transition duration-150 active" data-page="home" onclick="handleNavigation('home')">Главная</button>
+                <button class="nav-link text-gray-600 hover:text-blue-500 font-medium transition duration-150" data-page="about" onclick="handleNavigation('about')">Обо мне</button>
+                <button class="nav-link text-gray-600 hover:text-blue-500 font-medium transition duration-150" data-page="portfolio" onclick="handleNavigation('portfolio')">Портфолио</button>
+                <button class="nav-link text-gray-600 hover:text-blue-500 font-medium transition duration-150" data-page="contacts" onclick="handleNavigation('contacts')">Контакты</button>
+            </nav>
+
+            <!-- Контейнер для кнопки Гамбургер-меню (раньше здесь был и переводчик) -->
+            <div class="flex items-center space-x-4">
+                
+                <!-- Кнопка Гамбургер-меню (видна на мобильных) -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 hover:text-gray-900 focus:outline-none">
+                        <span class="sr-only">Открыть меню</span>
+                        <!-- Иконка "Меню" -->
+                        <i data-lucide="menu" id="menu-icon" class="h-7 w-7"></i>
+                        <!-- Иконка "Закрыть" (скрыта по умолчанию) -->
+                        <i data-lucide="x" id="close-icon" class="h-7 w-7 hidden"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Мобильное меню (скрыто по умолчанию) -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white shadow-lg border-t border-gray-100">
+            <div class="px-2 pt-2 pb-4 space-y-1 sm:px-3">
+                <button class="mobile-nav-link w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50 active" data-page="home">Главная</button>
+                <button class="mobile-nav-link w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50" data-page="about">Обо мне</button>
+                <button class="mobile-nav-link w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50" data-page="portfolio">Портфолио</button>
+                <button class="mobile-nav-link w-full text-left block px-3 py-3 rounded-md text-base font-medium text-gray-700 hover:text-blue-600 hover:bg-gray-50" data-page="contacts">Контакты</button>
+                
+                <!-- Блок Переводчика в мобильном меню УДАЛЕН -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Основной контент (ОСТАЕТСЯ БЕЗ ИЗМЕНЕНИЙ) -->
+    <main class="container mx-auto px-4 py-12 max-w-7xl">
+        
+        <!-- ====================================
+             1. Секция: Главная (Home)
+             ==================================== -->
+        <section id="home" class="page-content">
+            <!-- ... (Весь твой контент секции "Главная" остается здесь) ... -->
+            <div class="p-10 md:p-16 bg-white rounded-3xl shadow-2xl text-center">
+                <div class="mb-8 w-32 h-32 mx-auto rounded-full overflow-hidden shadow-xl border-4 border-blue-500">
+                    <!-- Замените на свое фото или используйте заглушку -->
+                    <img src="img/unnamed.jpg" alt="Ваше Фото" class="object-cover w-full h-full" onerror="this.onerror=null; this.src='https://placehold.co/128x128/3b82f6/ffffff?text=Фото'">
+                </div>
+                <h1 class="text-5xl md:text-6xl font-extrabold text-gray-900 mb-4">
+                    Привет, Я Джангир
+                </h1>
+                <!-- Добавлен эффект мигания (pulsing) -->
+                <p class="text-xl md:text-2xl text-gray-600 mb-6 font-light blinking-text">
+                    Frontend-разработчик | Специалист по HTML/CSS/JS
+                </p>
+                <p class="text-lg text-gray-700 max-w-3xl mx-auto">
+                    Я создаю эффективные и современные веб-сайты, используя чистый HTML, CSS и JavaScript. Мой фокус — скорость, адаптивность и идеальная кроссбраузерная совместимость. Добро пожаловать!
+                </p>
+                <div class="mt-8 flex justify-center space-x-4">
+                    <button onclick="handleNavigation('portfolio')" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg transition duration-300 transform hover:scale-105">
+                        <i data-lucide="briefcase" class="inline-block w-5 h-5 mr-2"></i> Смотреть работы
+                    </button>
+                    <button onclick="handleNavigation('contacts')" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-8 rounded-full shadow-md transition duration-300 transform hover:scale-105">
+                        Связаться
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====================================
+             2. Секция: Обо мне (About Me)
+             ==================================== -->
+        <section id="about" class="page-content">
+            <!-- ... (Весь твой контент секции "Обо мне" остается здесь) ... -->
+            <h2 class="text-4xl font-bold text-gray-900 mb-8 border-b-4 border-blue-500 pb-2 animated-header">Обо мне</h2>
+            
+            <!-- Блок Статистики -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 bg-blue-50 p-6 rounded-2xl shadow-inner mb-8 text-center">
+                <div class="p-4 border-b sm:border-b-0 sm:border-r border-blue-200">
+                    <i data-lucide="check-circle" class="w-8 h-8 mx-auto text-blue-600 mb-2"></i>
+                    <p class="text-4xl font-extrabold text-blue-600">3+</p>
+                    <p class="text-sm font-medium text-gray-600 mt-1">Выполненных Заказов</p>
+                </div>
+                <div class="p-4 border-b sm:border-b-0 sm:border-r border-blue-200">
+                    <i data-lucide="award" class="w-8 h-8 mx-auto text-blue-600 mb-2"></i>
+                    <p class="text-4xl font-extrabold text-blue-600">2+</p>
+                    <p class="text-sm font-medium text-gray-600 mt-1">Лет Опыта</p>
+                </div>
+                <div class="p-4">
+                    <i data-lucide="clock" class="w-8 h-8 mx-auto text-blue-600 mb-2"></i>
+                    <p class="text-4xl font-extrabold text-blue-600">100+</p>
+                    <p class="text-sm font-medium text-gray-600 mt-1">Рабочих Часов</p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                
+                <!-- Биография -->
+                <div class="bg-white p-6 rounded-2xl shadow-xl md:col-span-2">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i data-lucide="user" class="w-6 h-6 mr-3 text-blue-500"></i>Личная история и подход
+                    </h3>
+                    <p class="text-gray-700 mb-4 leading-relaxed">
+                        Мой путь в веб-разработке начался 2 года назад с глубокого изучения основ: чистого и семантического HTML, стильного и адаптивного CSS (включая Flexbox и Grid) и мощного JavaScript. Я создаю интерфейсы, которые идеально работают на любом экране. Также сейчас я изучаю React.Js то что сделает мои сайты более стойкими и интересными.
+                    </p>
+                    <p class="text-gray-700 leading-relaxed">
+                        Я успешно завершил более 3 проектов, от интернет-магазинов и сайта про фильмы до сложных портфолио для индивидуальных професионалов. Я фокусируюсь на дизайне и делаю сайт интереснее и не скучным, но, тем не менее очень информативным.
+                    </p>
+                </div>
+
+                <!-- Навыки -->
+                <div class="bg-white p-6 rounded-2xl shadow-xl">
+                    <h3 class="text-2xl font-semibold text-gray-800 mb-4 flex items-center">
+                        <i data-lucide="briefcase" class="w-6 h-6 mr-3 text-blue-500"></i>Ключевые Навыки
+                    </h3>
+                    <ul class="space-y-3 text-gray-700">
+                        <li class="p-2 bg-blue-50 rounded-lg font-medium">HTML5 / Семантика</li>
+                        <li class="p-2 bg-blue-50 rounded-lg font-medium">CSS3 (Flexbox, Grid, Анимации)</li>
+                        <li class="p-2 bg-blue-50 rounded-lg font-medium">JavaScript (программы)</li>
+                        <li class="p-2 bg-blue-50 rounded-lg font-medium">Tailwind CSS / Препроцессоры</li>
+                        <li class="p-2 bg-blue-50 rounded-lg font-medium">GitHub</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- ====================================
+             3. Секция: Портфолио (Portfolio)
+             ==================================== -->
+        <section id="portfolio" class="page-content">
+            <!-- ... (Весь твой контент секции "Портфолио" остается здесь) ... -->
+            <h2 class="text-4xl font-bold text-gray-900 mb-10 border-b-4 border-blue-500 pb-2 animated-header">Мое Портфолио</h2>
+            <br>
+            
+            <!-- ----------------------------------------------------
+                 1. Мои Заказы (Клиентские проекты)
+                 ---------------------------------------------------- -->
+            <h3 class="text-3xl font-bold text-gray-800 mb-6 mt-6 animated-header">1. Мои Заказы (Клиентские проекты)</h3>
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3 mb-12">
+                
+                <!-- Заказ 1: Промо-страница с формой -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-emerald-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/portfolio-img-1.png" alt="Изображение Клиентского Проекта 1" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/10b981/ffffff?text=Satt+Ui'">
+                    <div class="p-6">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS/JS (Продающий)</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Интернет Магазин для швейного бренда Satt ui</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Разработка адаптивного одностраничного интернет-магазина для опытного швейного специалиста, который шьет сумки, корзинки и коврики.
+                        </p>
+                        <a href="https://jangir007.github.io/satti-uii/#home" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Заказ 2: Адаптивный макет блога -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-emerald-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/portfolio-img-2.png" alt="Изображение Клиентского Проекта 2" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/10b981/ffffff?text=Zapatos.kz'">
+                    <div class="p-6">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS/JS (Продающий)</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Одностраничный портфолио для опытной швеи</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Минималистичный и информативный портфолио для девушки которая шьет желетки, накидки, полотенеца и и.т.д на заказ. Также одностраничный.
+                        </p>
+                        <a href="https://jangir007.github.io/zapatoskz/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Заказ 3: Интерактивная галерея -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-emerald-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/portfolio-img-3.png" alt="Изображение Клиентского Проекта 3" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/10b981/ffffff?text=Vengadores'">
+                    <div class="p-6">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS (сайт для посмотра Мстителей)</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Сайт для моих одноклассников для просмотра фильма Мстители</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            В этом году в моем классе была тема Мстители и им нужен был сайт для просмотра всех серий этого прекрасного фильма. Это маленький, но полезный сайт. 
+                        </p>
+                        <a href="https://jangir007.github.io/vengadores/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-emerald-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/portfolio-img.png" alt="Изображение Клиентского Проекта 3" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/10b981/ffffff?text=Exam+Prep'">
+                    <div class="p-6">
+                        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">Сайт больше созданный на JS</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Сайт для подготовки к экзамну (счетчик каллорий)</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            В нашем классе была тема по подготовке к экзамну и мне нужно было создать сайт для подготовки к экзамну. Я создал сайт с помощью JS, HTML и CSS.
+                        </p>
+                        <a href="https://jangir007.github.io/coneexamnn/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- ----------------------------------------------------
+                 2. Демонстрационные Сайты (Макеты)
+                 ---------------------------------------------------- -->
+            <h3 class="text-3xl font-bold text-gray-800 mb-6 mt-10 animated-header">2. Демонстрационные Сайты (Макеты)</h3>
+            <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+                
+                <!-- Проект 1: Лендинг с интерактивностью (Демо) -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/demo-site-1.png" alt="Изображение Проекта 1" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/3b82f6/ffffff?text=FitHub'">
+                    <div class="p-6">
+                        <span class="inline-block bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS/JS</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Сайт FitHub</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Сайт для держания себя в тонусе. Адаптивный лендинг с интерактивными элементами и формой подписки на чистом HTML,CSS и JS.
+                        </p>
+                        <a href="https://jangir007.github.io/fithub/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Проект 2: Адаптивный Макет Магазина (Демо) -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/demo-site-2.png" alt="Изображение Проекта 2" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/16a34a/ffffff?text=Planner'">
+                    <div class="p-6">
+                        <span class="inline-block bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS/JS (Grid & Flex)</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Планировшик целей и заданий</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Планировшик целей и заданий с возможностью добавления, удаления и отметки задач как выполненных на чистом JavaScript.
+                        </p>
+                        <a href="https://jangir007.github.io/planner/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Проект 3: Полный сайт с формами и валидацией (Демо) -->
+                <div class="bg-white rounded-xl overflow-hidden shadow-2xl hover:shadow-blue-300 transition duration-300 transform hover:-translate-y-1 project-card">
+                    <img src="img/demo-site-3.png" alt="Изображение Проекта 3" class="w-full h-48 object-cover" onerror="this.onerror=null; this.src='https://placehold.co/600x400/8b5cf6/ffffff?text=History'">
+                    <div class="p-6">
+                        <span class="inline-block bg-purple-100 text-purple-800 text-xs font-semibold px-3 py-1 rounded-full mb-2">HTML/CSS</span>
+                        <h3 class="text-xl font-bold text-gray-900 mb-2">Исторический сайт</h3>
+                        <p class="text-gray-600 text-sm mb-4">
+                            Сайт посвященный историческим событиям. Про пирамиды, древний египет и и.т.д. Сайт с красивым дизайном на чистом HTML и CSS.
+                        </S>
+                        <a href="https://jangir007.github.io/history/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium flex items-center">
+                            Посмотреть &rarr;
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ====================================
+             4. Секция: Контакты (Contacts)
+             ==================================== -->
+        <section id="contacts" class="page-content">
+            <!-- ... (Весь твой контент секции "Контакты" остается здесь) ... -->
+            <h2 style="display: flex; align-items: center; justify-content: center; margin: aut;" class="text-4xl font-bold text-gray-900 mb-8 border-b-4 border-blue-500 pb-2 animated-header">Свяжитесь со мной</h2>
+            
+            <div class="flex justify-center">
+                
+                <!-- Контактная информация (Форма удалена, блок центрирован) -->
+                <div class="bg-blue-600 text-white p-8 rounded-2xl shadow-xl w-full max-w-lg">
+                    <h3 class="text-2xl font-semibold mb-6">Мои данные</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-center">
+                            <i data-lucide="mail" class="w-6 h-6 mr-3 text-blue-200"></i>
+                            <span>Email: <a href="mailto:example@domain.com" class="underline hover:text-blue-200">assiyaespana2020@gmail.com</a></span>
+                        </li>
+                        <li class="flex items-center">
+                            <i data-lucide="phone" class="w-6 h-6 mr-3 text-blue-200"></i>
+                            <span>Телефон: +34 611 392 896</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i data-lucide="map-pin" class="w-6 h-6 mr-3 text-blue-200 mt-1"></i>
+                            <span>Местоположение: Аликанте, Испания</span>
+                        </li>
+                        <!-- Дополнительные ссылки: ОСТАВЛЕН ТОЛЬКО INSTAGRAM -->
+                        <li class="pt-4">
+                            <h4 class="font-semibold mb-2">Социальные сети:</h4>
+                            <div class="flex space-x-4">
+                                <a href="" target="_blank" class="text-blue-200 hover:text-white transition" title="Instagram"><i data-lucide="" class="w-6 h-6"></i></a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Модальное окно для сообщений (оставлено, так как удалена только форма, но не JS-функция) -->
+            <div id="message-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden items-center justify-center z-50 p-4">
+                <div class="bg-white p-6 rounded-lg shadow-2xl max-w-sm w-full text-center">
+                    <p id="modal-text" class="text-lg font-medium text-gray-800 mb-4"></p>
+                    <button onclick="closeMessage()" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-full transition">
+                        Закрыть
+                    </button>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+    
+    <!-- Нижний колонтитул -->
+    <footer style="height: 100px;" class="bg-gray-800 text-white py-6 mt-12">
+        <div class="container mx-auto px-4 text-center max-w-7xl">
+            <p class="text-sm">&copy; 2025 YelAr.</p>
+        </div>
+    </footer>
+
+    <!-- ----- СКРИПТ GOOGLE TRANSLATE УДАЛЕН ----- -->
+
+
+    <!-- JavaScript для навигации по страницам и анимации -->
+    <script>
+        
+        // --- НОВАЯ ЛОГИКА ГАМБУРГЕР-МЕНЮ ---
+        const menuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        const menuIcon = document.getElementById('menu-icon');
+        const closeIcon = document.getElementById('close-icon');
+
+        // Функция для закрытия меню
+        function closeMobileMenu() {
+            mobileMenu.classList.add('hidden');
+            menuIcon.classList.remove('hidden');
+            closeIcon.classList.add('hidden');
+        }
+
+        // Функция для открытия/закрытия по кнопке
+        menuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+            menuIcon.classList.toggle('hidden');
+            closeIcon.classList.toggle('hidden');
+        });
+
+        // Добавляем обработчики для ссылок в мобильном меню
+        const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+        mobileNavLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const pageId = link.dataset.page;
+                // 1. Вызываем твою функцию навигации
+                handleNavigation(pageId); 
+                // 2. Закрываем мобильное меню
+                closeMobileMenu(); 
+            });
+        });
+        // --- КОНЕЦ ЛОГИКИ ГАМБУРГЕР-МЕНЮ ---
+
+
+        // Функция для плавной активации карточек в Портфолио
+        function animatePortfolioCards() {
+            // Выбираем все карточки проектов
+            const cards = document.querySelectorAll('.project-card');
+            cards.forEach((card, index) => {
+                // Запускаем появление с задержкой, чтобы создать эффект "каскада"
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100 + 100); // Интервал 100ms между карточками + небольшая общая задержка
+            });
+        }
+
+        // Функция для переключения страниц
+        function handleNavigation(pageId) {
+            // 1. Скрыть все страницы
+            document.querySelectorAll('.page-content').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('active-page');
+            });
+            
+            // Сбрасываем стили карточек Портфолио перед переходом, чтобы анимация работала снова
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+            });
+
+
+            // 2. Показать запрошенную страницу
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+                
+                // Добавляем небольшую задержку для анимации opacity
+                setTimeout(() => {
+                    targetPage.classList.add('active-page');
+                }, 10); 
+            }
+
+            // 3. Обновить активный класс в навигации
+            updateActiveClass(pageId);
+
+            // 4. Запустить анимацию появления карточек, если это Портфолио
+            if (pageId === 'portfolio') {
+                animatePortfolioCards();
+            }
+            
+            // 5. Обновить URL
+            // (Проверяем, чтобы не дублировать хеш, если он уже есть)
+            if (window.location.hash !== `#${pageId}`) {
+                history.pushState(null, '', `#${pageId}`);
+            }
+        }
+
+        // Обработка загрузки страницы и кнопки "Назад" в браузере
+        document.addEventListener('DOMContentLoaded', () => {
+            // Определяем, какая страница должна быть активна при загрузке
+            let initialPage = 'home';
+            const hash = window.location.hash.substring(1);
+            if (hash && document.getElementById(hash)) {
+                initialPage = hash;
+            }
+            handleNavigation(initialPage);
+
+            // Обработка popstate (кнопка "Назад" в браузере)
+            window.addEventListener('popstate', () => {
+                const newHash = window.location.hash.substring(1) || 'home';
+                if (document.getElementById(newHash)) {
+                    // Используем прямую функцию, чтобы избежать зацикливания history.pushState
+                    showPage(newHash); 
+                    updateActiveClass(newHash);
+                    if (newHash === 'portfolio') {
+                        animatePortfolioCards();
+                    }
+                }
+            });
+
+            // Добавил обработчики для твоих кнопок "Смотреть работы" и "Связаться" на главной
+            // (на случай, если `onclick` не сработает, хотя он должен)
+            const viewWorkBtn = document.querySelector('button[onclick="handleNavigation(\'portfolio\')"]');
+            const contactBtn = document.querySelector('button[onclick="handleNavigation(\'contacts\')"]');
+            
+            if(viewWorkBtn) {
+                viewWorkBtn.addEventListener('click', (e) => {
+                    e.preventDefault(); // Предотвращаем стандартное поведение кнопки
+                    handleNavigation('portfolio');
+                });
+            }
+            if(contactBtn) {
+                contactBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    handleNavigation('contacts');
+                });
+            }
+        });
+
+        // Вспомогательная функция для popstate (без history.pushState)
+        function showPage(pageId) {
+            document.querySelectorAll('.page-content').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('active-page');
+            });
+
+            // Сброс стилей карточек
+            document.querySelectorAll('.project-card').forEach(card => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+            });
+
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+                setTimeout(() => {
+                    targetPage.classList.add('active-page');
+                }, 10);
+            }
+        }
+        
+        // Вспомогательная функция для обновления активного класса
+        function updateActiveClass(pageId) {
+            // Обновляем десктопные ссылки
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            const activeLink = document.querySelector(`.nav-link[data-page="${pageId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('active');
+            }
+            
+            // Обновляем мобильные ссылки
+            document.querySelectorAll('.mobile-nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            const activeMobileLink = document.querySelector(`.mobile-nav-link[data-page="${pageId}"]`);
+            if (activeMobileLink) {
+                activeMobileLink.classList.add('active');
+            }
+        }
+
+        // --- Функции для модального окна (замена alert) ---
+
+        const modal = document.getElementById('message-modal');
+        const modalText = document.getElementById('modal-text');
+
+        function showMessage(message, isSuccess = true) {
+            modalText.textContent = message;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeMessage() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // Также добавил заменители для твоих сломанных изображений (onerror)
+        document.addEventListener('DOMContentLoaded', () => {
+            const images = document.querySelectorAll('img');
+            images.forEach(img => {
+                // Если у img уже есть onerror, мы его не трогаем.
+                // Но у тебя были `img/portfolio-img.png` и т.д.
+                // Я добавил `onerror` прямо в HTML для надежности.
+                // Этот код для будущих изображений, если понадобится:
+                
+                // img.onerror = function() {
+                //     const placeholderText = this.alt || 'Image';
+                //     const width = this.width || 400;
+                //     const height = this.height || 300;
+                //     this.src = `https://placehold.co/${width}x${height}/e0e0e0/757575?text=${encodeURIComponent(placeholderText)}`;
+                //     this.onerror = null; // Предотвращаем бесконечный цикл, если заглушка тоже не загрузится
+                // };
+            });
+        });
+    </script>
+</body>
+</html>
